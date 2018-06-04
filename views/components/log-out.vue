@@ -1,11 +1,11 @@
 <template>
   <transition name="fade">
-    <p v-show="pageAnimated" style="padding: 20px;">正在跳转...</p>
+    <p v-show="pageAnimated" style="padding: 20px;">{{$t('c.logOut.text')}}</p>
   </transition>
 </template>
 
 <script>
-import cookie from 'react-cookie'
+import Cookies from 'universal-cookie'
 import config from 'config'
 
 export default {
@@ -14,8 +14,9 @@ export default {
   },
   methods: {
     logOut () {
+      const cookies = new Cookies()
       this.$ls.remove('user')
-      cookie.remove(config.storageNamespace + 'token')
+      cookies.remove(config.storageNamespace + 'token')
       this.$store.commit('user/SET_VALUE', {})
       this.$router.push('/login')
     }

@@ -213,6 +213,7 @@ Easy Mock 是一个可视化，并且能快速生成 **模拟数据** 的持久�
 
 - [OpenAPI Specification 1.2](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/1.2.md)
 - [OpenAPI Specification 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md)
+- [OpenAPI Specification 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
 ### API 自动生成
 
@@ -274,9 +275,45 @@ Easy Mock 是一个可视化，并且能快速生成 **模拟数据** 的持久�
 ### 响应式数据注意事项
 > 响应式数据提高了数据的可扩展性和灵活性，但同时也带来了一些问题。例如：代码中出现了死循环，这些问题往往都是致命的，因此我们做了一些限制。
 
-如果生成数据的时间 **超过2s**，系统将会返回一个 **timed out** 的错误信息，此时应该检查代码是否出现了 **异步操作** 或 **死循环**。
+如果生成数据的时间 **超过1s**，系统将会返回一个 **timed out** 的错误信息，此时应该检查代码是否出现了 **异步操作** 或 **死循环**。
 
 另外，无法在函数中使用 **setInterval**、**setTimeout** 等方法进行异步操作。{.warning}
+
+### 自定义响应
+
+当定义的数据结构中包含 _res 字段的时候，会进入一个特殊逻辑，可以给返回的请求添加一些定制信息。
+
+| 字段 | 描述 | 
+|:---:|:----:|
+| status | 可以定制返回的 http status code，默认是 200 |
+| cookies | 可以定制需要设置的 cookie（暂时不支持设置过期时间等） |
+| headers | 可以定制返回的 response 的 header |
+| data | 如果有这个字段，会以此数据直接覆盖整个返回的数据，并且此处不支持 mock 的语法（如果 _res.status 的值为 200，则不会覆盖默认定义的 mock 数据） |
+
+```js
+{
+  "success": true,
+  "data": {
+    "default": "hah"
+  },
+  "_res":{
+    "status": 400,
+    "data": {
+      "success": false
+    },
+    "cookies": {
+      "test": "true"
+    },
+    "headers": {
+      "Power": "easy-mock"
+    }
+  }
+}
+```
+
+以此定义为例，当 _res.status 的值为 400 的时候，用户端接收到的响应将会是 _res.data 中定义的数据，并且返回一个 status code 为 400 的响应，响应的 header 中会包含一个叫做 Power 的值，并为浏览器设置一个叫做 test 的 cookie。
+
+当你想要返回正常的 mock 数据的时候，修改 _res.status 为 200，或者将整个 _res 删掉即可。
 
 ## Tips
 
@@ -326,7 +363,7 @@ Easy Mock 是一个可视化，并且能快速生成 **模拟数据** 的持久�
 不难发现 **演示项目** 下有一个地址为 `/proxy` 的接口。在数据编辑器中我们只填写了一个接口地址，预览的时候可以把这个接口的数据代理回来。除此之外，我们向 `/proxy` 传入的参数（query 和 body）都会被传递过去。
 **并且**，如果你的代理接口地址为 `http://example.com/api/user/:id`，mock 接口地址为 `/api/user/:id`，那么这个 `id` 也会被正确的解析出来。
 
-注意：接口代理的超时时间为 **10s**。 {.warning}
+注意：接口代理的超时时间为 **3s**。 {.warning}
 
 ### JSONP
 
@@ -390,7 +427,7 @@ Easy Mock 并没有强制要求使用 Swagger，所以即使没有 Swagger 我�
 如果 Swagger 文档只能内网访问，那么外网 Easy Mock 将无法为其创建项目。
 
 **解决方案**
-> 只适用于 Swagger 2.0
+> 不适用于 OAS 1.2
 
 - 复制文档接口的 JSON 数据，以 [Petstore](http://petstore.swagger.io/v2/swagger.json) 为例
 - 在 Easy Mock 中新建一个接口，`数据编辑器` 中粘贴刚刚复制的接口数据（可能有点大）并完成创建
